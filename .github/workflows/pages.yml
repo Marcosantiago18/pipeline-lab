@@ -5,6 +5,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Permiso mínimo por defecto; cada job solo amplía lo que necesita.
 permissions:
   contents: read
 
@@ -13,10 +14,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Reutiliza la matriz de pruebas definida en tests.yml.
+  test:
+    name: Pruebas
+    uses: ./.github/workflows/tests.yml
+
   build:
-    name: Pruebas y compilación
+    name: Compilación
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
@@ -29,9 +38,6 @@ jobs:
 
       - name: Instalar dependencias
         run: npm ci
-
-      - name: Ejecutar pruebas
-        run: npm test
 
       - name: Calcular metadatos de compilación
         run: echo "VITE_BUILD_DATE=$(date -u +%Y-%m-%dT%H:%MZ)" >> "$GITHUB_ENV"
@@ -52,7 +58,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       pages: write
       id-token: write
     environment:

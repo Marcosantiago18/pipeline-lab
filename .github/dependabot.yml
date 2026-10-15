@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Dependencias de npm (vite, eslint, etc.).
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  # Actions usadas en los workflows (checkout, setup-node, deploy-pages, etc.).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

@@ -5,6 +5,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Permiso mínimo por defecto; cada job solo amplía lo que necesita.
 permissions:
   contents: read
 
@@ -13,35 +14,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Reutiliza la matriz de pruebas definida en tests.yml.
   test:
-    name: Pruebas (Node ${{ matrix.node }})
+    name: Pruebas
+    uses: ./.github/workflows/tests.yml
+
+  # Análisis estático en PARALELO con las pruebas (no depende de `test`).
+  lint:
+    name: Análisis estático
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [22, 24]
+    permissions:
+      contents: read
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
 
-      - name: Preparar Node.js ${{ matrix.node }}
+      - name: Preparar Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24
           cache: npm
 
       - name: Instalar dependencias
         run: npm ci
 
-      - name: Ejecutar pruebas
-        run: npm test
+      - name: Ejecutar ESLint
+        run: npm run lint
 
   build:
     name: Compilación
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
